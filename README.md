@@ -1,2 +1,2 @@
-# red-node-snapd
+# node-red-node-snapd
 A node-red node to control snapd
