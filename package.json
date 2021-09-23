@@ -1,0 +1,33 @@
+{
+  "name": "node-snapd",
+  "version": "1.0.0",
+  "description": "A node to control snapd",
+  "main": "snapd.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbruno74/red-node-snapd.git"
+  },
+  "keywords": [
+    "snap",
+    "snapd",
+    "snapcraft"
+  ],
+  "dependencies": {
+    "utf8": "~3.0.0",
+    "node-ipc": "~9.0.0"
+  },
+  "author": "dbruno74",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dbruno74/red-node-snapd/issues"
+  },
+  "homepage": "https://github.com/dbruno74/red-node-snapd#readme",
+  "node-red": {
+    "nodes": {
+      "snapd": "snapd.js"
+    }
+  }
+}
