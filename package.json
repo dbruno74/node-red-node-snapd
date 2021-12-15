@@ -1,5 +1,5 @@
 {
-  "name": "node-snapd",
+  "name": "@dbruno74/node-red-node-snapd",
   "version": "1.0.0",
   "description": "A node to control snapd",
   "main": "snapd.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dbruno74/red-node-snapd.git"
+    "url": "git+https://github.com/dbruno74/node-red-node-snapd.git"
   },
   "keywords": [
     "snap",
@@ -22,9 +22,9 @@
   "author": "dbruno74",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/dbruno74/red-node-snapd/issues"
+    "url": "https://github.com/dbruno74/node-red-node-snapd/issues"
   },
-  "homepage": "https://github.com/dbruno74/red-node-snapd#readme",
+  "homepage": "https://github.com/dbruno74/node-red-node-snapd#readme",
   "node-red": {
     "nodes": {
       "snapd": "snapd.js"
