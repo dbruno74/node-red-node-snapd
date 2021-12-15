@@ -11,11 +11,12 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         var node = this;
 
-	uri_prefix 	= "http://localhost/v2/";
+	uri_prefix 	= "http://localhost";
 	host 		= "localhost";
 	user_agent 	= "node-red-node-snapd";
 	accept		= "*/*";
 	snapd_socket 	= "/run/snapd.socket";
+	content_type	= "application/json";
 
 	function doGet(uri) {
 		ipc.connectTo(ipc.config.id,snapd_socket, function(){
@@ -45,7 +46,7 @@ module.exports = function(RED) {
                         });
                         ipc.of.snapd.on(
                                 "error", function(err){
-                                        node-warn(err);
+                                        node.warn(err);
                         });
                 });
 	};
@@ -55,7 +56,7 @@ module.exports = function(RED) {
                         node.warn("connectTo");
                         ipc.of.snapd.on(
                                 "connect", function(){
-                                        var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nAccept: " + accept + "\nContent-Lenght: " + body.len + "\n\n" + body + "\n\n";
+                                        var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
                                         node.warn(msg);
                                         ipc.of.snapd.emit(utf8.encode(msg));
                         });
@@ -78,25 +79,54 @@ module.exports = function(RED) {
                         });
                         ipc.of.snapd.on(
                                 "error", function(err){
-                                        node-warn(err);
+                                        node.warn(err);
+                        });
+                });
+        };
+
+	function doPut(uri, body) {
+		ipc.connectTo(ipc.config.id,snapd_socket, function(){
+                        node.warn("connectTo");
+                        ipc.of.snapd.on(
+                                "connect", function(){
+                                        var msg="PUT " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
+                                        node.warn(msg);
+                                        ipc.of.snapd.emit(utf8.encode(msg));
+                        });
+                        ipc.of.snapd.on(
+                                "disconnect", function(){
+                                        node.warn("disconnected!");
+                        });
+                        ipc.of.snapd.on(
+                                "data", function(data){
+                                        ipc.disconnect(ipc.config.id);
+                                        buff = Buffer.from(data);
+                                        str = buff.toString();
+
+                                        json = "{"+str.split(/{(.+)/)[1];       // isolate JSON body
+                                        payload = JSON.parse(json);
+
+                                 var msg = {'topic':'snapd'};
+                                 msg.payload = payload;
+                                        node.send(msg);
+                        });
+                        ipc.of.snapd.on(
+                                "error", function(err){
+                                        node.warn(err);
                         });
                 });
         };
 
 
         node.on('input', function(msg) {
-            if (msg.payload === "update_nodered") {
-		 var body="{\"action\": \"refresh\" } ";
-		 doPost("snaps/node-red", body);
+            if (msg.topic === "snapd_rest_api_get") {
+		 doGet(msg.payload);
+            }
+            if (msg.topic === "snapd_rest_api_post") {
+		 doPost(msg.payload.command, JSON.stringify(msg.payload.body));
 	    }
-            if (msg.payload === "systems") {
-		 doGet("systems");
-            }
-	    if (msg.payload === "system_info") {
-		 doGet("system-info");
-            }
-	    if (msg.payload === "refresh_app_list") {
-		 doGet("apps");
+            if (msg.topic === "snapd_rest_api_put") {
+		 doPut(msg.payload.command, JSON.stringify(msg.payload.body));
 	    }
         });
     }
