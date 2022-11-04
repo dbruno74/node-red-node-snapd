@@ -37,12 +37,18 @@ module.exports = function(RED) {
                                         buff = Buffer.from(data);
                                         str = buff.toString();
 
-                                        json = "{"+str.split(/{(.+)/)[1];       // isolate JSON body
-                                        payload = JSON.parse(json);
+					// get Content-Type
+					response_content_type = str.split(/Content-Type: /i)[1].split("\n")[0].split(";")[0];
+					if (response_content_type === "application/x.ubuntu.assertion")
+						payload = str.replace(/\n/g, "<br />");
+					else {
+                                        	json = "{"+str.split(/{(.+)/)[1];       // isolate JSON body
+                                        	payload = JSON.parse(json);
+					}
 
                                  var msg = {'topic':'snapd'};
                                  msg.payload = payload;
-                                        node.send(msg);
+                                 node.send(msg);
                         });
                         ipc.of.snapd.on(
                                 "error", function(err){
@@ -56,9 +62,21 @@ module.exports = function(RED) {
                         node.warn("connectTo");
                         ipc.of.snapd.on(
                                 "connect", function(){
-                                        var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
-                                        node.warn(msg);
-                                        ipc.of.snapd.emit(utf8.encode(msg));
+					if ( uri.match(/\/v2\/assertions.*/) ) {
+						if (body.charAt(0) === '"' && body.charAt(body.length -1) === '"')
+    							body = body.substr(1,body.length -2);
+						// body = body.replace(/( (?=[^:, ]+: ))|(?<=.+sign-key-sha3-384: .+ [^ ,:]+) |(?<=.+sign-key-sha3-384: [^ ]+) |(?<= ) /g,"\n"); // format with newlines
+						body = body.replace(/\\n/g,'\n');
+                                       		var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
+                                        	node.warn(msg);
+                                        	ipc.of.snapd.emit(utf8.encode(msg));
+					} 
+					else {
+						// body = JSON.stringify(body);
+                               			var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
+                                       		node.warn(msg);
+                                       		ipc.of.snapd.emit(utf8.encode(msg));
+					}
                         });
                         ipc.of.snapd.on(
                                 "disconnect", function(){
@@ -73,8 +91,8 @@ module.exports = function(RED) {
                                         json = "{"+str.split(/{(.+)/)[1];       // isolate JSON body
                                         payload = JSON.parse(json);
 
-                                 var msg = {'topic':'snapd'};
-                                 msg.payload = payload;
+                                	var msg = {'topic':'snapd'};
+                                 	msg.payload = payload;
                                         node.send(msg);
                         });
                         ipc.of.snapd.on(
@@ -106,8 +124,8 @@ module.exports = function(RED) {
                                         json = "{"+str.split(/{(.+)/)[1];       // isolate JSON body
                                         payload = JSON.parse(json);
 
-                                 var msg = {'topic':'snapd'};
-                                 msg.payload = payload;
+                                 	var msg = {'topic':'snapd'};
+                                 	msg.payload = payload;
                                         node.send(msg);
                         });
                         ipc.of.snapd.on(
@@ -124,6 +142,7 @@ module.exports = function(RED) {
             }
             if (msg.topic === "snapd_rest_api_post") {
 		 doPost(msg.payload.command, JSON.stringify(msg.payload.body));
+		 //doPost(msg.payload.command, msg.payload.body);
 	    }
             if (msg.topic === "snapd_rest_api_put") {
 		 doPut(msg.payload.command, JSON.stringify(msg.payload.body));
