@@ -17,6 +17,7 @@ module.exports = function(RED) {
 	accept		= "*/*";
 	snapd_socket 	= "/run/snapd.socket";
 	content_type	= "application/json";
+	content_type_assertions = "application/x.ubuntu.assertion";
 
 	function doGet(uri) {
 		ipc.connectTo(ipc.config.id,snapd_socket, function(){
@@ -62,18 +63,20 @@ module.exports = function(RED) {
                         node.warn("connectTo");
                         ipc.of.snapd.on(
                                 "connect", function(){
-					if ( uri.match(/\/v2\/assertions.*/) ) {
+					var expression = /\/v2\/assertions.*/;
+					var regex = new RegExp(expression);
+					if ( uri.match(regex) ) {
 						if (body.charAt(0) === '"' && body.charAt(body.length -1) === '"')
     							body = body.substr(1,body.length -2);
 						// body = body.replace(/( (?=[^:, ]+: ))|(?<=.+sign-key-sha3-384: .+ [^ ,:]+) |(?<=.+sign-key-sha3-384: [^ ]+) |(?<= ) /g,"\n"); // format with newlines
 						body = body.replace(/\\n/g,'\n');
-                                       		var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
+                                       		var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type_assertions + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
                                         	node.warn(msg);
                                         	ipc.of.snapd.emit(utf8.encode(msg));
 					} 
 					else {
 						// body = JSON.stringify(body);
-                               			var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
+                               			var msg="POST " + uri_prefix + uri + " HTTP/1.1\nHost: " + host + "\nUser-Agent: " + user_agent + "\nContent-Type: " + content_type + "\nAccept: " + accept + "\nContent-Length: " + body.length + "\n\n" + body;
                                        		node.warn(msg);
                                        		ipc.of.snapd.emit(utf8.encode(msg));
 					}
